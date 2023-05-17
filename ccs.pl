@@ -27,7 +27,25 @@
 % celorlalte predicate din temă, pentru a întreba, de exemplu, ce se
 % află pe muchia de nord a piesei 1, sau dacă piesa 1 se potrivește cu o
 % altă piesă.
-tile(_, _) :- false.
+%
+% [V, N, E, S, hasTwoC] - p: pajiste, c: cetate, d: drum
+% hasTwoC are valoarea true daca cetatile de pe margini nu sunt conectate
+tile(1, [c, c, c, p, false]).
+tile(2, [c, c, c, d, false]).
+tile(3, [p, c, c, p, false]).
+tile(4, [p, c, c, p, true]).
+tile(5, [p, c, p, c, true]).
+tile(6, [p, c, p, c, false]).
+tile(7, [p, c, p, p, false]).
+tile(8, [d, c, c, d, false]).
+tile(9, [d, c, p, d, false]).
+tile(10, [p, c, d, d, false]).
+tile(11, [d, c, d, p, false]).
+tile(12, [d, c, d, d, false]).
+tile(13, [d, p, p, d, false]).
+tile(14, [d, p, d, p, false]).
+tile(15, [d, p, d, d, false]).
+tile(16, [d, d, d, d, false]).
 
 
 % at/3
@@ -48,7 +66,15 @@ tile(_, _) :- false.
 %
 % Dacă What nu este legat, trebuie legat la entitatea care se află pe
 % muchia din direcția Dir.
-at(_, _, _) :- false.
+get_west([West|_], West).
+get_north([_, North|_], North).
+get_east([_, _, East|_], East).
+get_south([_, _, _, South|_], South).
+
+at(Tile, w, What) :- get_west(Tile, West), (var(What) -> What = West ; What == West).
+at(Tile, n, What) :- get_north(Tile, North), (var(What) -> What = North ; What == North).
+at(Tile, e, What) :- get_east(Tile, East), (var(What) -> What = East ; What == East).
+at(Tile, s, What) :- get_south(Tile, South), (var(What) -> What = South ; What == South).
 
 
 % atL/3
@@ -68,7 +94,8 @@ at(_, _, _) :- false.
 % respectivă, pot fi doar o submulțime a acestora.
 % De exemplu, la piesa 14, predicatul este adevărat pentru entitatea d
 % și pentru oricare dintre listele [w], [e] sau [e,w].
-atL(_, _, _) :- false.
+atL(_, [], _) :- true.
+atL(Tile, [First|Rest], What) :- at(Tile, First, What), atL(Tile, Rest, What).
 
 
 % hasTwoCitadels/1
@@ -76,7 +103,7 @@ atL(_, _, _) :- false.
 %
 % Predicatul întoarce adevărat dacă pe piesă există două cetăți diferite
 % (ca în piesele 4 și 5).
-hasTwoCitadels(_) :- false.
+hasTwoCitadels([_, _, _, _, HasTwoC]) :- HasTwoC.
 
 
 % ccw/3
