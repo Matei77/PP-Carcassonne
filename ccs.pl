@@ -1,3 +1,4 @@
+% Copyright: Ionescu Matei-Stefan - 323CAb - 2022-2023
 :- dynamic detailed_mode_disabled/0.
 :- ensure_loaded('files.pl').
 
@@ -123,7 +124,11 @@ hasTwoCitadels([HasTwoC|_]) :- HasTwoC.
 % La piesa 16, orice rotire trebuie să aibă aceeași reprezentare cu
 % reprezentarea inițială.
 ccw(Tile, 0, RotatedTile) :- RotatedTile = Tile.
-ccw([HasTwoC, First|Rest], Rotation, RotatedTile) :- Rotation > 0, append([HasTwoC|Rest], [First], NewTile), NewRotation is Rotation - 1, ccw(NewTile, NewRotation, RotatedTile).
+ccw([HasTwoC, First|Rest], Rotation, RotatedTile) :-
+	Rotation > 0,
+	append([HasTwoC|Rest], [First], NewTile),
+	NewRotation is Rotation - 1,
+	ccw(NewTile, NewRotation, RotatedTile).
 
 
 % rotations/2
@@ -145,16 +150,18 @@ ccw([HasTwoC, First|Rest], Rotation, RotatedTile) :- Rotation > 0, append([HasTw
 % Folosiți recursivitate (nu meta-predicate).
 % getFirst([First|_], First).
 rotationHelper(_, 4, RotationPairs) :- RotationPairs = [].
-rotationHelper(InitialTile, Rotation, RotationPairs) :- Rotation < 4,
-														ccw(InitialTile, Rotation, RotatedTile),
-														((InitialTile \= RotatedTile) ->
-															(NewRotation is Rotation + 1,
-															rotationHelper(InitialTile, NewRotation, NewRotationPairs),
-															RotationPairs = [(Rotation, RotatedTile)|NewRotationPairs])
-															;
-															RotationPairs = []).
+rotationHelper(InitialTile, Rotation, RotationPairs) :-
+	Rotation < 4,
+	ccw(InitialTile, Rotation, RotatedTile),
+	InitialTile \= RotatedTile ->
+		NewRotation is Rotation + 1,
+		rotationHelper(InitialTile, NewRotation, NewRotationPairs),
+		RotationPairs = [(Rotation, RotatedTile)|NewRotationPairs]
+		; RotationPairs = [].
 
-rotations(Tile, RotationPairs) :- rotationHelper(Tile, 1, NewRotationPairs), RotationPairs = [(0, Tile)|NewRotationPairs].
+rotations(Tile, RotationPairs) :-
+	rotationHelper(Tile, 1, NewRotationPairs),
+	RotationPairs = [(0, Tile)|NewRotationPairs].
 								
 
 % match/3
@@ -171,7 +178,10 @@ rotations(Tile, RotationPairs) :- rotationHelper(Tile, 1, NewRotationPairs), Rot
 % ccw(T8, 3, T8R), match(T8R, T10, w).
 %
 % Puteți folosi predicatul opposite/2 din utils.pl.
-match(Tile, NeighborTile, NeighborDirection) :- opposite(NeighborDirection, TileDirection), at(Tile, NeighborDirection, Type), at(NeighborTile, TileDirection, Type).
+match(Tile, NeighborTile, NeighborDirection) :-
+	opposite(NeighborDirection, TileDirection),
+	at(Tile, NeighborDirection, Type),
+	at(NeighborTile, TileDirection, Type).
 
 
 % findRotation/3
@@ -197,7 +207,21 @@ match(Tile, NeighborTile, NeighborDirection) :- opposite(NeighborDirection, Tile
 % soluția de mai sus s-ar reduce doar la rotația 3.
 %
 % Hint: Prolog face backtracking automat. Folosiți match/3.
-findRotation(Tile, Neighbors, Rotation) :- .
+checkRotation([], _).
+checkRotation([FirstN|RestN], RotatedTile) :-
+	arg(1, FirstN, Neigh),
+	arg(2, FirstN, NeighDir),
+	match(RotatedTile, Neigh, NeighDir),
+	checkRotation(RestN, RotatedTile).
 
+checkAll(_, _, [], _):- false.
+checkAll(Tile, Neighbors, [FirstR|RestR], Rotation) :-
+	arg(1, FirstR, Rot),
+	arg(2, FirstR, RotTile),
+	checkRotation(Neighbors, RotTile),
+	Rotation = Rot
+	; checkAll(Tile, Neighbors, RestR, Rotation).
 
-
+findRotation(Tile, Neighbors, Rotation) :-
+	rotations(Tile, RotationPairs),
+	checkAll(Tile, Neighbors, RotationPairs, Rotation).
