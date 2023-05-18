@@ -156,12 +156,6 @@ rotationHelper(InitialTile, Rotation, RotationPairs) :- Rotation < 4,
 
 rotations(Tile, RotationPairs) :- rotationHelper(Tile, 1, NewRotationPairs), RotationPairs = [(0, Tile)|NewRotationPairs].
 								
-								
-								% (First == false ->
-								%   	rotation(Tile, [-(0, Tile)]) ;
-								% 		arg(1, F)
-								% 	ccw(Tile, 1, RotatedTile), -(1, 2).
-
 
 % match/3
 % match(+Tile, +NeighborTile, +NeighborDirection)
@@ -177,7 +171,7 @@ rotations(Tile, RotationPairs) :- rotationHelper(Tile, 1, NewRotationPairs), Rot
 % ccw(T8, 3, T8R), match(T8R, T10, w).
 %
 % Puteți folosi predicatul opposite/2 din utils.pl.
-match(_, _, _) :- false.
+match(Tile, NeighborTile, NeighborDirection) :- opposite(NeighborDirection, TileDirection), at(Tile, NeighborDirection, Type), at(NeighborTile, TileDirection, Type).
 
 
 % findRotation/3
@@ -203,7 +197,7 @@ match(_, _, _) :- false.
 % soluția de mai sus s-ar reduce doar la rotația 3.
 %
 % Hint: Prolog face backtracking automat. Folosiți match/3.
-findRotation(_, _, _) :- false.
+findRotation(Tile, Neighbors, Rotation) :- .
 
 
 
