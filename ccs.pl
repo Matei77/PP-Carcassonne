@@ -143,7 +143,24 @@ ccw([HasTwoC, First|Rest], Rotation, RotatedTile) :- Rotation > 0, append([HasTw
 % piesa 16 rezultatul va conține o singură pereche.
 %
 % Folosiți recursivitate (nu meta-predicate).
-rotations(_, _) :- false.
+% getFirst([First|_], First).
+rotationHelper(_, 4, RotationPairs) :- RotationPairs = [].
+rotationHelper(InitialTile, Rotation, RotationPairs) :- Rotation < 4,
+														ccw(InitialTile, Rotation, RotatedTile),
+														((InitialTile \= RotatedTile) ->
+															(NewRotation is Rotation + 1,
+															rotationHelper(InitialTile, NewRotation, NewRotationPairs),
+															RotationPairs = [(Rotation, RotatedTile)|NewRotationPairs])
+															;
+															RotationPairs = []).
+
+rotations(Tile, RotationPairs) :- rotationHelper(Tile, 1, NewRotationPairs), RotationPairs = [(0, Tile)|NewRotationPairs].
+								
+								
+								% (First == false ->
+								%   	rotation(Tile, [-(0, Tile)]) ;
+								% 		arg(1, F)
+								% 	ccw(Tile, 1, RotatedTile), -(1, 2).
 
 
 % match/3
