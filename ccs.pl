@@ -28,24 +28,24 @@
 % află pe muchia de nord a piesei 1, sau dacă piesa 1 se potrivește cu o
 % altă piesă.
 %
-% [V, N, E, S, hasTwoC] - p: pajiste, c: cetate, d: drum
+% [hasTwoC, V, N, E, S] - p: pajiste, c: cetate, d: drum
 % hasTwoC are valoarea true daca cetatile de pe margini nu sunt conectate
-tile(1, [c, c, c, p, false]).
-tile(2, [c, c, c, d, false]).
-tile(3, [p, c, c, p, false]).
-tile(4, [p, c, c, p, true]).
-tile(5, [p, c, p, c, true]).
-tile(6, [p, c, p, c, false]).
-tile(7, [p, c, p, p, false]).
-tile(8, [d, c, c, d, false]).
-tile(9, [d, c, p, d, false]).
-tile(10, [p, c, d, d, false]).
-tile(11, [d, c, d, p, false]).
-tile(12, [d, c, d, d, false]).
-tile(13, [d, p, p, d, false]).
-tile(14, [d, p, d, p, false]).
-tile(15, [d, p, d, d, false]).
-tile(16, [d, d, d, d, false]).
+tile(1, [false, c, c, c, p]).
+tile(2, [false, c, c, c, d]).
+tile(3, [false, p, c, c, p]).
+tile(4, [true, p, c, c, p]).
+tile(5, [true, p, c, p, c]).
+tile(6, [false, p, c, p, c]).
+tile(7, [false, p, c, p, p]).
+tile(8, [false, d, c, c, d]).
+tile(9, [false, d, c, p, d]).
+tile(10, [false, p, c, d, d]).
+tile(11, [false, d, c, d, p]).
+tile(12, [false, d, c, d, d]).
+tile(13, [false, d, p, p, d]).
+tile(14, [false, d, p, d, p]).
+tile(15, [false, d, p, d, d]).
+tile(16, [false, d, d, d, d]).
 
 
 % at/3
@@ -66,10 +66,10 @@ tile(16, [d, d, d, d, false]).
 %
 % Dacă What nu este legat, trebuie legat la entitatea care se află pe
 % muchia din direcția Dir.
-get_west([West|_], West).
-get_north([_, North|_], North).
-get_east([_, _, East|_], East).
-get_south([_, _, _, South|_], South).
+get_west([_, West|_], West).
+get_north([_, _, North|_], North).
+get_east([_, _, _, East|_], East).
+get_south([_, _, _, _, South], South).
 
 at(Tile, w, What) :- get_west(Tile, West), (var(What) -> What = West ; What == West).
 at(Tile, n, What) :- get_north(Tile, North), (var(What) -> What = North ; What == North).
@@ -103,7 +103,7 @@ atL(Tile, [First|Rest], What) :- at(Tile, First, What), atL(Tile, Rest, What).
 %
 % Predicatul întoarce adevărat dacă pe piesă există două cetăți diferite
 % (ca în piesele 4 și 5).
-hasTwoCitadels([_, _, _, _, HasTwoC]) :- HasTwoC.
+hasTwoCitadels([HasTwoC|_]) :- HasTwoC.
 
 
 % ccw/3
@@ -122,7 +122,8 @@ hasTwoCitadels([_, _, _, _, HasTwoC]) :- HasTwoC.
 % Rotation=1 și Rotation=3 vor fi identice.
 % La piesa 16, orice rotire trebuie să aibă aceeași reprezentare cu
 % reprezentarea inițială.
-ccw(_, _, _) :- false.
+ccw(Tile, 0, RotatedTile) :- RotatedTile = Tile.
+ccw([HasTwoC, First|Rest], Rotation, RotatedTile) :- Rotation > 0, append([HasTwoC|Rest], [First], NewTile), NewRotation is Rotation - 1, ccw(NewTile, NewRotation, RotatedTile).
 
 
 % rotations/2
