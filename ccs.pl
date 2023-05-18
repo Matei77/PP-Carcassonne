@@ -148,7 +148,6 @@ ccw([HasTwoC, First|Rest], Rotation, RotatedTile) :-
 % piesa 16 rezultatul va conține o singură pereche.
 %
 % Folosiți recursivitate (nu meta-predicate).
-% getFirst([First|_], First).
 rotationHelper(_, 4, RotationPairs) :- RotationPairs = [].
 rotationHelper(InitialTile, Rotation, RotationPairs) :-
 	Rotation < 4,
