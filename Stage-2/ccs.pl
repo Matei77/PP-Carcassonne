@@ -1,8 +1,9 @@
+% Copyright: Ionescu Matei-Stefan - 323CAb - 2022-2023
 :- dynamic detailed_mode_disabled/0.
 :- ensure_loaded('files.pl').
 
 
-%% TODO
+
 % tile/2
 % tile(Index, Tile)
 %
@@ -27,11 +28,27 @@
 % celorlalte predicate din temă, pentru a întreba, de exemplu, ce se
 % află pe muchia de nord a piesei 1, sau dacă piesa 1 se potrivește cu o
 % altă piesă.
-tile(_, _) :- false.
+%
+% [hasTwoC, V, N, E, S] - p: pajiste, c: cetate, d: drum
+% hasTwoC are valoarea true daca cetatile de pe margini nu sunt conectate
+tile(1, [false, c, c, c, p]).
+tile(2, [false, c, c, c, d]).
+tile(3, [false, p, c, c, p]).
+tile(4, [true, p, c, c, p]).
+tile(5, [true, p, c, p, c]).
+tile(6, [false, p, c, p, c]).
+tile(7, [false, p, c, p, p]).
+tile(8, [false, d, c, c, d]).
+tile(9, [false, d, c, p, d]).
+tile(10, [false, p, c, d, d]).
+tile(11, [false, d, c, d, p]).
+tile(12, [false, d, c, d, d]).
+tile(13, [false, d, p, p, d]).
+tile(14, [false, d, p, d, p]).
+tile(15, [false, d, p, d, d]).
+tile(16, [false, d, d, d, d]).
 
 
-
-%% TODO
 % at/3
 % at(+Tile, +Direction, ?What)
 %
@@ -50,11 +67,17 @@ tile(_, _) :- false.
 %
 % Dacă What nu este legat, trebuie legat la entitatea care se află pe
 % muchia din direcția Dir.
-at(_, _, _) :- false.
+get_west([_, West|_], West).
+get_north([_, _, North|_], North).
+get_east([_, _, _, East|_], East).
+get_south([_, _, _, _, South], South).
+
+at(Tile, w, What) :- get_west(Tile, West), (var(What) -> What = West ; What == West).
+at(Tile, n, What) :- get_north(Tile, North), (var(What) -> What = North ; What == North).
+at(Tile, e, What) :- get_east(Tile, East), (var(What) -> What = East ; What == East).
+at(Tile, s, What) :- get_south(Tile, South), (var(What) -> What = South ; What == South).
 
 
-
-%% TODO
 % atL/3
 % atL(+Tile, +Directions, +What)
 %
@@ -72,21 +95,18 @@ at(_, _, _) :- false.
 % respectivă, pot fi doar o submulțime a acestora.
 % De exemplu, la piesa 14, predicatul este adevărat pentru entitatea d
 % și pentru oricare dintre listele [w], [e] sau [e,w].
-atL(_, _, _) :- false.
+atL(_, [], _) :- true.
+atL(Tile, [First|Rest], What) :- at(Tile, First, What), atL(Tile, Rest, What).
 
 
-
-%% TODO
 % hasTwoCitadels/1
 % hasTwoCitadels(+Tile)
 %
 % Predicatul întoarce adevărat dacă pe piesă există două cetăți diferite
 % (ca în piesele 4 și 5).
-hasTwoCitadels(_) :- false.
+hasTwoCitadels([HasTwoC|_]) :- HasTwoC.
 
 
-
-%% TODO
 % ccw/3
 % ccw(+Tile, +Rotation, -RotatedTile)
 % Predicatul este adevărat dacă RotatedTile este reprezentarea piesei cu
@@ -103,11 +123,14 @@ hasTwoCitadels(_) :- false.
 % Rotation=1 și Rotation=3 vor fi identice.
 % La piesa 16, orice rotire trebuie să aibă aceeași reprezentare cu
 % reprezentarea inițială.
-ccw(_, _, _) :- false.
+ccw(Tile, 0, RotatedTile) :- RotatedTile = Tile.
+ccw([HasTwoC, First|Rest], Rotation, RotatedTile) :-
+	Rotation > 0,
+	append([HasTwoC|Rest], [First], NewTile),
+	NewRotation is Rotation - 1,
+	ccw(NewTile, NewRotation, RotatedTile).
 
 
-
-%% TODO
 % rotations/2
 % rotations(+Tile, -RotationPairs)
 %
@@ -125,11 +148,21 @@ ccw(_, _, _) :- false.
 % piesa 16 rezultatul va conține o singură pereche.
 %
 % Folosiți recursivitate (nu meta-predicate).
-rotations(_, _) :- false.
+rotationHelper(_, 4, RotationPairs) :- RotationPairs = [].
+rotationHelper(InitialTile, Rotation, RotationPairs) :-
+	Rotation < 4,
+	ccw(InitialTile, Rotation, RotatedTile),
+	InitialTile \= RotatedTile ->
+		NewRotation is Rotation + 1,
+		rotationHelper(InitialTile, NewRotation, NewRotationPairs),
+		RotationPairs = [(Rotation, RotatedTile)|NewRotationPairs]
+		; RotationPairs = [].
 
+rotations(Tile, RotationPairs) :-
+	rotationHelper(Tile, 1, NewRotationPairs),
+	RotationPairs = [(0, Tile)|NewRotationPairs].
+								
 
-
-%% TODO
 % match/3
 % match(+Tile, +NeighborTile, +NeighborDirection)
 %
@@ -144,11 +177,12 @@ rotations(_, _) :- false.
 % ccw(T8, 3, T8R), match(T8R, T10, w).
 %
 % Puteți folosi predicatul opposite/2 din utils.pl.
-match(_, _, _) :- false.
+match(Tile, NeighborTile, NeighborDirection) :-
+	opposite(NeighborDirection, TileDirection),
+	at(Tile, NeighborDirection, Type),
+	at(NeighborTile, TileDirection, Type).
 
 
-
-%% TODO
 % findRotation/3
 % findRotation(+Tile, +Neighbors, -Rotation)
 %
@@ -172,8 +206,24 @@ match(_, _, _) :- false.
 % soluția de mai sus s-ar reduce doar la rotația 3.
 %
 % Hint: Prolog face backtracking automat. Folosiți match/3.
-findRotation(_, _, _) :- false.
+checkRotation([], _).
+checkRotation([FirstN|RestN], RotatedTile) :-
+	arg(1, FirstN, Neigh),
+	arg(2, FirstN, NeighDir),
+	match(RotatedTile, Neigh, NeighDir),
+	checkRotation(RestN, RotatedTile).
 
+checkAll(_, _, [], _):- false.
+checkAll(Tile, Neighbors, [FirstR|RestR], Rotation) :-
+	arg(1, FirstR, Rot),
+	arg(2, FirstR, RotTile),
+	checkRotation(Neighbors, RotTile),
+	Rotation = Rot
+	; checkAll(Tile, Neighbors, RestR, Rotation).
+
+findRotation(Tile, Neighbors, Rotation) :-
+	rotations(Tile, RotationPairs),
+	checkAll(Tile, Neighbors, RotationPairs, Rotation).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%% Etapa 2
@@ -185,7 +235,7 @@ findRotation(_, _, _) :- false.
 %
 % Leagă Board la reprezentarea unei table goale de joc (nu a fost
 % plasată încă nicio piesă).
-emptyBoard(_) :- false.
+emptyBoard([]).
 
 
 
@@ -202,7 +252,7 @@ emptyBoard(_) :- false.
 % devine singura de pe tablă.
 %
 % Poziția este dată ca un tuplu (X, Y).
-boardSet(_, _, _, _) :- false.
+boardSet(BoardIn, _, _, BoardOut) :- BoardOut = BoardIn.
 
 
 
@@ -214,7 +264,7 @@ boardSet(_, _, _, _) :- false.
 % poziția Pos. Poziția este dată ca un tuplu (X, Y).
 %
 % Dacă la poziția Pos nu este nicio piesă, predicatul eșuează.
-boardGet(_, _, _) :- false.
+boardGet(Board, (X, Y), Tile) :- member((X, Y), Board).
 
 
 
