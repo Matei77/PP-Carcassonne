@@ -266,7 +266,7 @@ boardSet(BoardIn, _, _, BoardIn).
 % poziția Pos. Poziția este dată ca un tuplu (X, Y).
 %
 % Dacă la poziția Pos nu este nicio piesă, predicatul eșuează.
-boardGet(Board, (X, Y), Tile) :- member((X, Y), Board).
+boardGet(Board, (X, Y), Tile) :- member((X, Y, Tile), Board).
 
 
 
