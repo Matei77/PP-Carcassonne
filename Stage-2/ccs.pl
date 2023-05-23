@@ -321,6 +321,8 @@ canPlaceTile(Board, (X, Y), Tile) :-
 	findall((XNeigh, YNeigh, TileNeigh),
 	(member((XNeigh, YNeigh, TileNeigh), Board), member((XNeigh, YNeigh, _), NeighPos)),
 	NeighborTiles),
+	length(NeighborTiles, L),
+	(L =:= 0 -> false ; true),
 	forall(member((XNeigh, YNeigh, TileNeigh), NeighborTiles),
 	(member((XNeigh, YNeigh, Dir), NeighPos), match(Tile, TileNeigh, Dir))).
 
