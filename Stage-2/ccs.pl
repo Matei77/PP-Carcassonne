@@ -253,7 +253,11 @@ emptyBoard([]).
 %
 % Poziția este dată ca un tuplu (X, Y).
 boardSet([], (X, Y), Tile, [(X, Y, Tile)]) :- !.
-boardSet(BoardIn, (X, Y), Tile, BoardOut) :- canPlaceTile(BoardIn, (X, Y), Tile), BoardOut = [(X, Y, Tile)|BoardIn], !.
+
+boardSet(BoardIn, (X, Y), Tile, BoardOut) :-
+	canPlaceTile(BoardIn, (X, Y), Tile),
+	BoardOut = [(X, Y, Tile)|BoardIn], !.
+
 boardSet(BoardIn, _, _, BoardIn).
 
 
@@ -280,7 +284,17 @@ boardGet(Board, (X, Y), Tile) :- member((X, Y, Tile), Board).
 % Pentru o tablă goală, predicatul eșuează.
 %
 % Hint: max_list/2 și min_list/2
-boardGetLimits(_, _, _, _, _) :- false.
+getX((X, _, _), X).
+getX((_, Y, _), Y).
+
+boardGetLimits([], _, _, _, _) :- false, !.
+boardGetLimits(Board, XMin, YMin, XMax, YMax) :-
+	maplist(getX, Board, Xs),
+	maplist(getY, Board, Ys),
+	min_list(Xs, XMin),
+	min_list(Ys, YMin),
+	max_list(Xs, XMax),
+	max_list(Ys, YMax).
 
 
 
@@ -298,7 +312,8 @@ boardGetLimits(_, _, _, _, _) :- false.
 % - piesa se potrivește cu toți vecinii deja existenți pe tablă.
 %
 % Hint: neighbor/3 și directions/1 , ambele din utils.pl
-canPlaceTile(_, _, _) :- false.
+canPlaceTile([], _, _) :- true, !.
+canPlaceTile(Board, (X, Y), _) :- \+ member((X, Y, _), Board).
 
 
 
