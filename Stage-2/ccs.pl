@@ -284,9 +284,6 @@ boardGet(Board, (X, Y), Tile) :- member((X, Y, Tile), Board).
 % Pentru o tablă goală, predicatul eșuează.
 %
 % Hint: max_list/2 și min_list/2
-getX((X, _, _), X).
-getX((_, Y, _), Y).
-
 boardGetLimits([], _, _, _, _) :- false, !.
 boardGetLimits(Board, XMin, YMin, XMax, YMax) :-
 	maplist(getX, Board, Xs),
@@ -296,6 +293,10 @@ boardGetLimits(Board, XMin, YMin, XMax, YMax) :-
 	max_list(Xs, XMax),
 	max_list(Ys, YMax).
 
+getX((X, _, _), X).
+getX((_, Y, _), Y).
+getT((_, _, T), T).
+getFirst([First|_], First).
 
 
 %% TODO
@@ -313,8 +314,31 @@ boardGetLimits(Board, XMin, YMin, XMax, YMax) :-
 %
 % Hint: neighbor/3 și directions/1 , ambele din utils.pl
 canPlaceTile([], _, _) :- true, !.
-canPlaceTile(Board, (X, Y), _) :- \+ member((X, Y, _), Board).
+canPlaceTile(Board, (X, Y), Tile) :-
+	(\+ member((X, Y, _), Board)),
+	directions(Dirs),
+	getNeighbors((X, Y), Dirs, NeighPos),
+	findall((XNeigh, YNeigh, TileNeigh),
+	(member((XNeigh, YNeigh, TileNeigh), Board), member((XNeigh, YNeigh, _), NeighPos)),
+	NeighborTiles),
+	forall(member((XNeigh, YNeigh, TileNeigh), NeighborTiles),
+	(member((XNeigh, YNeigh, Dir), NeighPos), match(Tile, TileNeigh, Dir))).
 
+%
+
+getNeighbors(_, [], []).
+getNeighbors((X, Y), [FirstDir|RestDir], Neighbors) :- 
+	getNeighbors((X, Y), RestDir, NewNeighbors),
+	neighbor((X, Y), FirstDir, (XN, YN)),
+	Neighbors = [(XN, YN, FirstDir)|NewNeighbors].
+
+
+%tile(1, Tile), boardSet([], (1, 2), Tile, Board), canPlaceTile(BoardOut, (1, 1), Tile).
+%tile(1, Tile), boardSet([], (1, 2), Tile, BoardOut), canPlaceTile(BoardOut, (2, 1), Tile).
+
+% tile(1, Tile1), tile(3, Tile2), boardSet([], (1, 1), Tile, Board), (\+ member((0, 1, _), Board)), directions(Dirs), getNeighbors((0, 1), Dirs, NeighPos), findall((XNeigh, YNeigh, _), (member((XNeigh, YNeigh, _), Board), member((XNeigh, YNeigh, _), NeighPos)), NeighborTiles).
+
+%tile(1, Tile1), tile(3, Tile2), boardSet([], (1, 1), Tile, Board), (\+ member((0, 1, _), Board)), directions(Dirs), getNeighbors((0, 1), Dirs, NeighPos), findall((XNeigh, YNeigh, _), (member((XNeigh, YNeigh, _), Board), member((XNeigh, YNeigh, _), NeighPos)), NeighborTiles).
 
 
 %% TODO
