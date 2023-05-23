@@ -252,7 +252,7 @@ emptyBoard([]).
 % devine singura de pe tablă.
 %
 % Poziția este dată ca un tuplu (X, Y).
-boardSet([], (X, Y), Tile, [(X, Y, Tile)]) :- !.
+boardSet([], (X, Y), Tile, [(X, Y, Tile)]).
 boardSet(BoardIn, (X, Y), Tile, BoardOut) :-
 	canPlaceTile(BoardIn, (X, Y), Tile),
 	BoardOut = [(X, Y, Tile)|BoardIn].
@@ -281,7 +281,7 @@ boardGet(Board, (X, Y), Tile) :- member((X, Y, Tile), Board).
 % Pentru o tablă goală, predicatul eșuează.
 %
 % Hint: max_list/2 și min_list/2
-boardGetLimits([], _, _, _, _) :- false, !.
+boardGetLimits([], _, _, _, _) :- false.
 boardGetLimits(Board, XMin, YMin, XMax, YMax) :- 
 	maplist(getX, Board, Xs), 
 	maplist(getY, Board, Ys), 
@@ -308,18 +308,20 @@ getY((_, Y, _), Y).
 % - piesa se potrivește cu toți vecinii deja existenți pe tablă.
 %
 % Hint: neighbor/3 și directions/1 , ambele din utils.pl
-canPlaceTile([], _, _) :- true, !.
+canPlaceTile([], _, _) :- true.
 canPlaceTile(Board, (X, Y), Tile) :-
 	(\+ member((X, Y, _), Board)),
 	directions(Dirs),
 	getNeighbors((X, Y), Dirs, NeighPos),
-	findall((XNeigh, YNeigh, TileNeigh),
-	(member((XNeigh, YNeigh, TileNeigh), Board), member((XNeigh, YNeigh, _), NeighPos)),
-	NeighborTiles),
+	findall(
+		(XNeigh, YNeigh, TileNeigh),
+		(member((XNeigh, YNeigh, TileNeigh), Board), member((XNeigh, YNeigh, _), NeighPos)),
+		NeighborTiles),
 	length(NeighborTiles, L),
 	L =\= 0,
-	forall(member((XNeigh, YNeigh, TileNeigh), NeighborTiles),
-	(member((XNeigh, YNeigh, Dir), NeighPos), match(Tile, TileNeigh, Dir))).
+	forall(
+		member((XNeigh, YNeigh, TileNeigh), NeighborTiles),
+		(member((XNeigh, YNeigh, Dir), NeighPos), match(Tile, TileNeigh, Dir))).
 
 getNeighbors(_, [], []).
 getNeighbors((X, Y), [FirstDir|RestDir], Neighbors) :- 
@@ -341,8 +343,30 @@ getNeighbors((X, Y), [FirstDir|RestDir], Neighbors) :-
 % Hint: between/3 (predefinit) și neighbor/3 din utils.pl
 %
 % Atenție! Și în afara limitelor curente există poziții disponibile.
-getAvailablePositions(_, _) :- false.
+getAvailablePositions([], _) :- false.
+getAvailablePositions(Board, Positions) :- 
+	boardGetLimits(Board, XMin, YMin, XMax, YMax),
+	XMinT is XMin - 1,
+	YMinT is YMin - 1,
+	XMaxT is XMax + 1,
+	YMaxT is YMax + 1,
+	findall(X, between(XMinT, XMaxT, X), XPos),
+	findall(Y, between(YMinT, YMaxT, Y), YPos),
+	findall(
+		(X, Y),
+		(member(X, XPos), member(Y, YPos), canPlaceAtPos(Board, (X, Y))),
+		Positions).
 
+canPlaceAtPos(Board, (X, Y)) :-
+	(\+ member((X, Y, _), Board)),
+	directions(Dirs),
+	getNeighbors((X, Y), Dirs, NeighPos),
+	findall(
+		(XNeigh, YNeigh, TileNeigh),
+		(member((XNeigh, YNeigh, TileNeigh), Board), member((XNeigh, YNeigh, _), NeighPos)),
+		NeighborTiles),
+	length(NeighborTiles, L),
+	L =\= 0.
 
 
 %% TODO
@@ -368,10 +392,30 @@ getAvailablePositions(_, _) :- false.
 %
 % În ieșirea de la teste, rezultatele vor fi asamblate ca
 % (X,Y):Rotation.
-findPositionForTile(_, _, _, _) :- false.
+findPositionForTile([], _, (0,0), 0).
+findPositionForTile(Board, Tile, (XAns, YAns), Rotation) :- 
+	getAvailablePositions(Board, Positions),
+	setof(
+		(X, Y, Rot),
+		(member((X, Y), Positions), getNeighTileAndDir(Board, (X, Y), Neighbors), findRotation(Tile, Neighbors, Rot)),
+		Result),
+	getAllAnswers(Result, (XAns, YAns), Rotation).
 
 
+getAllAnswers([], _, _) :- false.
+getAllAnswers([FirstR|RestR], (X, Y), Rotation) :-
+	(getPos(FirstR, (X, Y)), getRot(FirstR, Rotation)) ;
+	getAllAnswers(RestR, (X, Y), Rotation).
 
 
+getPos((X, Y, _), (X, Y)).
+getRot((_, _, Rot), Rot).
 
 
+getNeighTileAndDir(Board, (X, Y), Neighbors) :-
+	directions(Dirs),
+	getNeighbors((X, Y), Dirs, NeighPos),
+	findall(
+		(TileNeigh, Dir),
+		(member((XNeigh, YNeigh, TileNeigh), Board), member((XNeigh, YNeigh, Dir), NeighPos)),
+		Neighbors).
