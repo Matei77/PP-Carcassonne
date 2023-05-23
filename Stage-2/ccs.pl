@@ -253,12 +253,9 @@ emptyBoard([]).
 %
 % Poziția este dată ca un tuplu (X, Y).
 boardSet([], (X, Y), Tile, [(X, Y, Tile)]) :- !.
-
 boardSet(BoardIn, (X, Y), Tile, BoardOut) :-
 	canPlaceTile(BoardIn, (X, Y), Tile),
-	BoardOut = [(X, Y, Tile)|BoardIn], !.
-
-boardSet(BoardIn, _, _, BoardIn).
+	BoardOut = [(X, Y, Tile)|BoardIn].
 
 
 
@@ -285,18 +282,16 @@ boardGet(Board, (X, Y), Tile) :- member((X, Y, Tile), Board).
 %
 % Hint: max_list/2 și min_list/2
 boardGetLimits([], _, _, _, _) :- false, !.
-boardGetLimits(Board, XMin, YMin, XMax, YMax) :-
-	maplist(getX, Board, Xs),
-	maplist(getY, Board, Ys),
-	min_list(Xs, XMin),
-	min_list(Ys, YMin),
-	max_list(Xs, XMax),
+boardGetLimits(Board, XMin, YMin, XMax, YMax) :- 
+	maplist(getX, Board, Xs), 
+	maplist(getY, Board, Ys), 
+	min_list(Xs, XMin), 
+	min_list(Ys, YMin), 
+	max_list(Xs, XMax), 
 	max_list(Ys, YMax).
 
 getX((X, _, _), X).
-getX((_, Y, _), Y).
-getT((_, _, T), T).
-getFirst([First|_], First).
+getY((_, Y, _), Y).
 
 
 %% TODO
@@ -322,25 +317,15 @@ canPlaceTile(Board, (X, Y), Tile) :-
 	(member((XNeigh, YNeigh, TileNeigh), Board), member((XNeigh, YNeigh, _), NeighPos)),
 	NeighborTiles),
 	length(NeighborTiles, L),
-	(L =:= 0 -> false ; true),
+	L =\= 0,
 	forall(member((XNeigh, YNeigh, TileNeigh), NeighborTiles),
 	(member((XNeigh, YNeigh, Dir), NeighPos), match(Tile, TileNeigh, Dir))).
-
-%
 
 getNeighbors(_, [], []).
 getNeighbors((X, Y), [FirstDir|RestDir], Neighbors) :- 
 	getNeighbors((X, Y), RestDir, NewNeighbors),
 	neighbor((X, Y), FirstDir, (XN, YN)),
 	Neighbors = [(XN, YN, FirstDir)|NewNeighbors].
-
-
-%tile(1, Tile), boardSet([], (1, 2), Tile, Board), canPlaceTile(BoardOut, (1, 1), Tile).
-%tile(1, Tile), boardSet([], (1, 2), Tile, BoardOut), canPlaceTile(BoardOut, (2, 1), Tile).
-
-% tile(1, Tile1), tile(3, Tile2), boardSet([], (1, 1), Tile, Board), (\+ member((0, 1, _), Board)), directions(Dirs), getNeighbors((0, 1), Dirs, NeighPos), findall((XNeigh, YNeigh, _), (member((XNeigh, YNeigh, _), Board), member((XNeigh, YNeigh, _), NeighPos)), NeighborTiles).
-
-%tile(1, Tile1), tile(3, Tile2), boardSet([], (1, 1), Tile, Board), (\+ member((0, 1, _), Board)), directions(Dirs), getNeighbors((0, 1), Dirs, NeighPos), findall((XNeigh, YNeigh, _), (member((XNeigh, YNeigh, _), Board), member((XNeigh, YNeigh, _), NeighPos)), NeighborTiles).
 
 
 %% TODO
