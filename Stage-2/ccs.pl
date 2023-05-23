@@ -252,7 +252,9 @@ emptyBoard([]).
 % devine singura de pe tablă.
 %
 % Poziția este dată ca un tuplu (X, Y).
-boardSet(BoardIn, _, _, BoardOut) :- BoardOut = BoardIn.
+boardSet([], (X, Y), Tile, [(X, Y, Tile)]) :- !.
+boardSet(BoardIn, (X, Y), Tile, BoardOut) :- canPlaceTile(BoardIn, (X, Y), Tile), BoardOut = [(X, Y, Tile)|BoardIn], !.
+boardSet(BoardIn, _, _, BoardIn).
 
 
 
